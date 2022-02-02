@@ -8,7 +8,7 @@
 
 ## TL;DR
 
-This repository contains the code implementing in C++ our method described in our publication [Efficient Exploration and Selection of Network Configurations for Improving 802.11ax Spatial Reuse](https://link.to.add.com), with a test infrastructure built on the open-source network simulator [ns-3](https://www.nsnam.org/). We provided it to ease replications and experiments with our algorithms.
+This repository contains the code implementing in C++ our method described in our publication [Improving the Spatial Reuse in IEEE 802.11ax WLANs: A Multi-Armed Bandit Approach](https://dl.acm.org/doi/abs/10.1145/3479239.3485715), with a test infrastructure built on the open-source network simulator [ns-3](https://www.nsnam.org/). We provided it to ease replications and experiments with our algorithms.
 
 ## Repository architecture
 
