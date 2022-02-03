@@ -28,7 +28,7 @@ enum Dist { LOG, SQRT, N2, N4 };
 
 class Simulation {
 	public:
-		Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, double duration, double testDuration, std::string outputName, double beta=1.0);
+		Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, double duration, double testDuration, std::string outputName, std::vector<double> programSteps = {0.0}, std::vector<double> saturationProgram = {1.0}, double beta=1.0);
 		pid_t getPID() const;
 		void readTopology(std::string path);
 		void storeMetrics();
@@ -37,7 +37,6 @@ class Simulation {
 		double fScoreRewardFromThroughputs();
 		double fairnessFromThroughputs();
 		double cumulatedThroughputFromThroughputs();
-		NetworkConfiguration handleClusterizedConfiguration(const NetworkConfiguration& configuration);
 		std::vector<double> apThroughputsFromThroughputs();
 		std::vector<double> staThroughputsFromThroughputs();
 		std::vector<double> staPersFromPers();
@@ -65,7 +64,6 @@ class Simulation {
 		std::vector<double> _positionAPY;
 		std::vector<double> _positionStaX;
 		std::vector<double> _positionStaY;
-		std::vector<unsigned int> _clustersAP;
 		std::vector<std::vector<double>> _throughputs;
 		std::vector<std::vector<double>> _pers;
 		std::vector<std::vector<double>> _attainableThroughputs;

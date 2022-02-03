@@ -13,7 +13,7 @@
  * @param outputName std::string the output file name
  * @param beta double the beta parameter for FSCORE reward
  */ 
-Simulation::Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, double duration, double testDuration, std::string outputName, double beta) : _rewardType(r), _testDuration(testDuration), _beta(beta) {
+Simulation::Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, double duration, double testDuration, std::string outputName, std::vector<double> programSteps, std::vector<double> saturationProgram, double beta) : _rewardType(r), _testDuration(testDuration), _beta(beta) {
 	this->_pid = fork();
 	if (this->_pid == 0) {
 		// Child process
@@ -22,7 +22,7 @@ Simulation::Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, doub
 		this->readTopology(topoPath);
 
 		// Index of channel to use during the simulation
-		int channel = 0, numberOfAPs = this->_positionAPX.size(), numberOfStas = 0;
+		unsigned int channel = 0, numberOfAPs = this->_positionAPX.size(), numberOfStas = 0;
 		for (std::vector<unsigned int> assocs: this->_associations)
 			numberOfStas += assocs.size();
 
@@ -30,14 +30,14 @@ Simulation::Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, doub
 
 		//Adapt interval as function of the number of stations
 		std::vector<double> intervalsCross(numberOfAPs);
-		for (int i = 0; i < numberOfAPs; i++) intervalsCross[i] = this->_intervalCross * this->_associations[i].size();
+		for (unsigned int i = 0; i < numberOfAPs; i++) intervalsCross[i] = this->_intervalCross * this->_associations[i].size();
 
 		// APs creation and configuration
 		// At the start, they're all configured with 802.11 default conf
 		NodeContainer nodesAP;
 		nodesAP.Create(numberOfAPs);
 		std::vector<YansWifiPhyHelper> wifiPhy(numberOfAPs); // One PHY for each AP
-		for(int i = 0; i < numberOfAPs; i++) {
+		for(unsigned int i = 0; i < numberOfAPs; i++) {
 			wifiPhy[i] = YansWifiPhyHelper::Default();
 			wifiPhy[i].Set("Antennas", UintegerValue(2));
 			// 2 spatial streams to support htMcs from 8 to 15 with short GI
@@ -52,7 +52,7 @@ Simulation::Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, doub
 
 		// Stations creation and configuration
 		std::vector<NodeContainer> nodesSta(numberOfAPs);
-		for(int i = 0; i < numberOfAPs; i++) nodesSta[i].Create(this->_associations[i].size());
+		for(unsigned int i = 0; i < numberOfAPs; i++) nodesSta[i].Create(this->_associations[i].size());
 		// One phy for every station
 		YansWifiPhyHelper staWifiPhy = YansWifiPhyHelper::Default();
 		staWifiPhy.Set("Antennas", UintegerValue(2));
@@ -69,7 +69,7 @@ Simulation::Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, doub
 		Ptr<YansWifiChannel> channelPtr = wifiChannel.Create ();
 		// Attribution to stations and models
 		staWifiPhy.SetChannel(channelPtr);
-		for(int i = 0; i < numberOfAPs; i++) wifiPhy[i].SetChannel(channelPtr);
+		for(unsigned int i = 0; i < numberOfAPs; i++) wifiPhy[i].SetChannel(channelPtr);
 
 		// 802.11ax protocol
 		WifiHelper wifi;
@@ -85,19 +85,19 @@ Simulation::Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, doub
 		// Mac for Stations
 		WifiMacHelper wifiMac;
 		wifiMac.SetType("ns3::StaWifiMac", "Ssid", SsidValue(ssid));
-		for (int i = 0; i < numberOfAPs; i++) devices[i] = wifi.Install(staWifiPhy, wifiMac, nodesSta[i]);
+		for (unsigned int i = 0; i < numberOfAPs; i++) devices[i] = wifi.Install(staWifiPhy, wifiMac, nodesSta[i]);
 		// Mac for APs
 		this->_devices = std::vector<NetDeviceContainer>(numberOfAPs);
 		wifiMac.SetType("ns3::ApWifiMac", "Ssid", SsidValue(ssid));
-		for (int i = 0; i < numberOfAPs; i++) this->_devices[i] = wifi.Install(wifiPhy[i], wifiMac, nodesAP.Get(i));
+		for (unsigned int i = 0; i < numberOfAPs; i++) this->_devices[i] = wifi.Install(wifiPhy[i], wifiMac, nodesAP.Get(i));
 
 		// Mobility for devices
 		MobilityHelper mobility;
 		Ptr<ListPositionAllocator> positionAlloc = CreateObject<ListPositionAllocator>();
 		// For APs
-		for (int i = 0; i < numberOfAPs; i++) positionAlloc->Add(Vector(this->_positionAPX[i], this->_positionAPY[i], 0.0));
+		for (unsigned int i = 0; i < numberOfAPs; i++) positionAlloc->Add(Vector(this->_positionAPX[i], this->_positionAPY[i], 0.0));
 		// For stations
-		for (int i = 0; i < numberOfAPs; i++)
+		for (unsigned int i = 0; i < numberOfAPs; i++)
 			for (unsigned int j = 0 ; j < this->_associations[i].size(); j++)
 				positionAlloc->Add(Vector(this->_positionStaX[this->_associations[i][j]], this->_positionStaY[this->_associations[i][j]], 0.0));
 		// Devices are not moving
@@ -106,17 +106,17 @@ Simulation::Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, doub
 		// Application to APs
 		mobility.Install(nodesAP);
 		// Application to stations
-		for(int i = 0; i < numberOfAPs; i++) mobility.Install(nodesSta[i]);
+		for(unsigned int i = 0; i < numberOfAPs; i++) mobility.Install(nodesSta[i]);
 
 		//IP stack and addresses
 		InternetStackHelper internet;
-		for(int i = 0; i < numberOfAPs; i++) internet.Install(nodesSta[i]);
+		for(unsigned int i = 0; i < numberOfAPs; i++) internet.Install(nodesSta[i]);
 		internet.Install(nodesAP);
 
 		Ipv4AddressHelper ipv4;
 		ipv4.SetBase("10.1.0.0", "255.255.0.0");
 		Ipv4InterfaceContainer apInterfaces;
-		for(int i = 0; i < numberOfAPs; i++) {
+		for(unsigned int i = 0; i < numberOfAPs; i++) {
 			apInterfaces = ipv4.Assign(this->_devices[i]);
 			ipv4.Assign(devices[i]);
 		}
@@ -126,32 +126,38 @@ Simulation::Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, doub
 		uint16_t port = 4000;
 		UdpServerHelper server(port);
 		this->_serversPerAp = std::vector<ApplicationContainer>(numberOfAPs);
-		for(int i = 0; i < numberOfAPs; i++) {
+		for(unsigned int i = 0; i < numberOfAPs; i++) {
 			ApplicationContainer apps = server.Install(nodesSta[i]);
 			apps.Start(Seconds(applicationStart));
 			apps.Stop(Seconds(applicationEnd));
 			this->_serversPerAp[i] = apps;
 		}
 		// Client is installed on all APs
+		std::random_device rd;
+		std::default_random_engine e2(rd()) ;
+		std::uniform_real_distribution<> dist(0, 1);
+		double nonSaturationRate = 0.25;
 		UdpClientHelper clientCT;//CT=cross traffic (from AP to stations)
-		for(int i = 0; i < numberOfAPs; i++) {
+		for(unsigned int i = 0; i < numberOfAPs; i++) {
 				for(unsigned int j = 0; j < this->_associations[i].size(); j++) {
-						// IPv4 instance of the station
-						Ipv4Address addr = nodesSta[i].Get(j)
-							->GetObject<Ipv4>()
-							->GetAddress(1, 0) // Loopback (1-0)
-							.GetLocal();
+					// IPv4 instance of the station
+					Ipv4Address addr = nodesSta[i].Get(j)
+						->GetObject<Ipv4>()
+						->GetAddress(1, 0) // Loopback (1-0)
+						.GetLocal();
 
+					for (unsigned int k = 0; k < programSteps.size(); k++) {
 						clientCT.SetAttribute ("RemoteAddress",AddressValue(addr));
 						clientCT.SetAttribute ("RemotePort",UintegerValue(port));
 						clientCT.SetAttribute ("MaxPackets", UintegerValue(1e9));
-						clientCT.SetAttribute ("Interval", TimeValue(Seconds(intervalsCross[i])));
+						clientCT.SetAttribute ("Interval", TimeValue(Seconds(intervalsCross[i] / (dist(e2) < saturationProgram[k] ? 1.0 : nonSaturationRate))));
 						clientCT.SetAttribute ("PacketSize", UintegerValue(this->_packetSize));
 
 						// Installation on AP
 						ApplicationContainer apps = clientCT.Install(nodesAP.Get(i));
-						apps.Start(Seconds(applicationStart));
-						apps.Stop(Seconds(applicationEnd));
+						apps.Start(Seconds(applicationStart + duration * programSteps[k]));
+						apps.Stop(Seconds(applicationStart + duration * ((k < programSteps.size() - 1) ? programSteps[k+1] : 1.0)));
+					}
 				}
 		}
 
@@ -159,14 +165,13 @@ Simulation::Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, doub
 
 		// Optimization relative objects
 		// Init callback for configuration changes
-		unsigned int nParams = std::set<unsigned int>(this->_clustersAP.begin(), this->_clustersAP.end()).size();
-		for (unsigned int i = 0; i < nParams; i++) {
+		for (unsigned int i = 0; i < numberOfAPs; i++) {
 			this->_configuration.push_back(std::make_tuple(this->_defaultSensibility, this->_defaultPower));
 		}
 		Simulator::Schedule(Seconds(applicationStart+testDuration), &Simulation::endOfTest, this);
 
 		// Init containers for throughput calculation
-		for (int i = 0; i < numberOfAPs; i++) {
+		for (unsigned int i = 0; i < numberOfAPs; i++) {
 			unsigned int nStas = this->_associations[i].size();
 			this->_throughputs.push_back(std::vector<double>(nStas, 0));
 			this->_pers.push_back(std::vector<double>(nStas, 0));
@@ -176,8 +181,8 @@ Simulation::Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, doub
 		}
 
 		// Parameters to optimize
-		std::vector<ConstrainedCouple> parameters(nParams);
-		for (unsigned int i = 0; i < nParams; i++) {
+		std::vector<ConstrainedCouple> parameters(numberOfAPs);
+		for (unsigned int i = 0; i < numberOfAPs; i++) {
 			parameters[i] = ConstrainedCouple(SingleParameter(-82, -62, 1), SingleParameter(1, 21, 1), &parameterConstraint);
 		}
 
@@ -277,34 +282,11 @@ void Simulation::endOfTest() {
 }
 
 /**
- * Build the network configuration according to the topo clusters
- * 
- * @param configuration NetworkConfiguration the network configuration clusterized
- * 
- * @return the unclusterized network configuration
- */
-NetworkConfiguration Simulation::handleClusterizedConfiguration(const NetworkConfiguration& configuration) {
-	unsigned int numberAps = this->_positionAPX.size();
-	NetworkConfiguration unclusterized(numberAps);
-	unsigned int k = 0;
-	for (std::tuple<double, double> couple: configuration) {
-		for (unsigned int i = 0; i < numberAps; i++) {
-			if (this->_clustersAP[i] == k) {
-				unclusterized[i] = couple;
-			}
-		}
-		k++;
-	}
-
-	return unclusterized;
-}
-
-/**
  * Store the network metrics in dedicated containers.
  * This method should be called AFTER computeThroughputsAndErrors.
  */
 void Simulation::storeMetrics() {
-	this->_configurations.push_back(this->handleClusterizedConfiguration(this->_configuration));
+	this->_configurations.push_back(this->_configuration);
 
 	double rew = this->rewardFromThroughputs();
 	this->_rewards.push_back(rew);
@@ -491,12 +473,11 @@ void Simulation::computeThroughputsAndErrors() {
  */ 
 void Simulation::setupNewConfiguration(NetworkConfiguration configuration) {
   int nNodes = this->_devices.size();
-	NetworkConfiguration unclusterized = this->handleClusterizedConfiguration(configuration);
   for (int i = 0; i < nNodes; i++) {
     Ptr<WifiPhy> phy = dynamic_cast<WifiNetDevice*>(GetPointer((this->_devices[i].Get(0))))->GetPhy();
 
-    double sensibility = std::get<0>(unclusterized[i]),
-           txPower = std::get<1>(unclusterized[i]);
+    double sensibility = std::get<0>(configuration[i]),
+           txPower = std::get<1>(configuration[i]);
     phy->SetTxPowerEnd(txPower);
     phy->SetTxPowerStart(txPower);
     phy->SetRxSensitivity(sensibility);
@@ -522,20 +503,9 @@ void Simulation::readTopology(std::string path) {
   reader->parse(jsonText.c_str(), jsonText.c_str() + jsonText.size(), &topo, &errors);
   
   // APs
-	unsigned int c = 0;
-	bool clusterized = false;
-	if (topo["aps"][0].isMember("cluster")) clusterized = true;
-
   for (Json::Value ap: topo["aps"]) {
     this->_positionAPX.push_back(ap["x"].asDouble());
     this->_positionAPY.push_back(ap["y"].asDouble());
-
-		if (clusterized) {
-			this->_clustersAP.push_back(ap["cluster"].asUInt64());
-		} else {
-			this->_clustersAP.push_back(c);
-			c++;
-		}
 
     std::vector<unsigned int> assoc;
     for (Json::Value sta: ap["stas"]) {

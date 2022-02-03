@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <random>
 
 #include<sys/wait.h>
 
@@ -127,7 +128,7 @@ int main (int argc, char *argv[]) {
   // Duration of a single test
   double testDuration = 0.05;
   // Optimizers to test
-  std::vector<Optim> optimizers({THOMP_NORM});
+  std::vector<Optim> optimizers({THOMP_GAMNORM, THOMP_NORM, EGREEDY});
   // Samplers to test
   std::vector<Samp> samplers({HGM, UNIF});
   // Rewards to test
@@ -135,7 +136,11 @@ int main (int argc, char *argv[]) {
   // Topos to test
   std::vector<std::string> topos({"T12"});
   // For each topo
+
   for (std::string topo: topos) {
+    // Build a saturation regime
+    std::vector<double> times({0, 1.0/3.0, 2.0/3.0});
+    std::vector<double> saturatedStas({2.0/3.0, 1.0/3.0, 1.0});
     // For each optimizer
     for (Optim o: optimizers) {
       // For each sampler
@@ -166,7 +171,7 @@ int main (int argc, char *argv[]) {
           }
 
           // Build the template of the output
-          std::string outputName = topo + "_" + doubleToString(duration) + "_" + oId + "_" + sId + "_" + rId + "_" + doubleToString(testDuration);
+          std::string outputName = topo + "_" + doubleToString(duration) + "_" + oId + "_" + sId + "_" + rId + "_" + doubleToString(testDuration) + "_DIFSATURATION";
 
           // Log
           std::cout << "Working on " << outputName << "..." << std::endl;
@@ -174,7 +179,7 @@ int main (int argc, char *argv[]) {
           // Launching nSimulations simulations
           std::vector<Simulation*> simulations(nSimulations);
           for (unsigned int i = 0; i < nSimulations; i++) {
-            simulations[i] = new Simulation(o, s, r, "./scratch/nsTest/topos/" + topo + ".json", duration, testDuration, outputName + "_" + std::to_string(i) + ".tsv");
+            simulations[i] = new Simulation(o, s, r, "./scratch/nsTest/topos/" + topo + ".json", duration, testDuration, outputName + "_" + std::to_string(i) + ".tsv", times, saturatedStas);
           }
 
           // Wait for all simulations to finish
