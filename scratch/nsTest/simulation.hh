@@ -37,6 +37,7 @@ class Simulation {
 		double fScoreRewardFromThroughputs();
 		double fairnessFromThroughputs();
 		double cumulatedThroughputFromThroughputs();
+		std::vector<std::vector<double>> attainableThroughputs();
 		std::vector<double> apThroughputsFromThroughputs();
 		std::vector<double> staThroughputsFromThroughputs();
 		std::vector<double> staPersFromPers();
@@ -51,6 +52,7 @@ class Simulation {
 	protected:
 		pid_t _pid;
 		Reward _rewardType;
+		double _duration;
 		double _testDuration;
 		double _beta;
 		std::vector<double> _rewards;
@@ -66,7 +68,6 @@ class Simulation {
 		std::vector<double> _positionStaY;
 		std::vector<std::vector<double>> _throughputs;
 		std::vector<std::vector<double>> _pers;
-		std::vector<std::vector<double>> _attainableThroughputs;
 		std::vector<std::vector<unsigned int>> _associations;
 		std::vector<NetDeviceContainer> _devices;
 		NetworkConfiguration _configuration;
@@ -74,10 +75,14 @@ class Simulation {
 		std::vector<ApplicationContainer> _serversPerAp;
 		std::vector<std::vector<unsigned int>> _lastRxPackets;
 		std::vector<std::vector<unsigned int>> _lastLostPackets;
+		double _interval;
+		std::vector<double> _programSteps;
+		std::vector<std::vector<std::vector<double>>> _attainableThroughputs;
+		double _cumulatedTime = 0.0;
 		unsigned int _packetSize = 1464;
+		unsigned int _stepIndex = 0;
 		int _defaultSensibility = -82;
 		int _defaultPower = 20;
-		double _intervalCross = 0.00001;
 		double _attainableThroughput = 300.0e6;
 };
 

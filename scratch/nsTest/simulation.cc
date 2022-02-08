@@ -13,13 +13,15 @@
  * @param outputName std::string the output file name
  * @param beta double the beta parameter for FSCORE reward
  */ 
-Simulation::Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, double duration, double testDuration, std::string outputName, std::vector<double> programSteps, std::vector<double> saturationProgram, double beta) : _rewardType(r), _testDuration(testDuration), _beta(beta) {
+Simulation::Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, double duration, double testDuration, std::string outputName, std::vector<double> programSteps, std::vector<double> saturationProgram, double beta) : _rewardType(r), _duration(duration), _testDuration(testDuration), _beta(beta), _programSteps(programSteps) {
 	this->_pid = fork();
 	if (this->_pid == 0) {
 		// Child process
 
 		// Topology
 		this->readTopology(topoPath);
+
+		this->_interval = 8.0 * this->_packetSize / this->_attainableThroughput;
 
 		// Index of channel to use during the simulation
 		unsigned int channel = 0, numberOfAPs = this->_positionAPX.size(), numberOfStas = 0;
@@ -30,7 +32,7 @@ Simulation::Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, doub
 
 		//Adapt interval as function of the number of stations
 		std::vector<double> intervalsCross(numberOfAPs);
-		for (unsigned int i = 0; i < numberOfAPs; i++) intervalsCross[i] = this->_intervalCross * this->_associations[i].size();
+		for (unsigned int i = 0; i < numberOfAPs; i++) intervalsCross[i] = this->_interval * this->_associations[i].size();
 
 		// APs creation and configuration
 		// At the start, they're all configured with 802.11 default conf
@@ -133,32 +135,38 @@ Simulation::Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, doub
 			this->_serversPerAp[i] = apps;
 		}
 		// Client is installed on all APs
+		this->_attainableThroughputs = std::vector<std::vector<std::vector<double>>>(programSteps.size(), std::vector<std::vector<double>>(numberOfAPs, std::vector<double>()));
 		std::random_device rd;
 		std::default_random_engine e2(rd()) ;
 		std::uniform_real_distribution<> dist(0, 1);
-		double nonSaturationRate = 0.25;
-		UdpClientHelper clientCT;//CT=cross traffic (from AP to stations)
+		double nonSaturationRate = 0.01;
 		for(unsigned int i = 0; i < numberOfAPs; i++) {
-				for(unsigned int j = 0; j < this->_associations[i].size(); j++) {
-					// IPv4 instance of the station
-					Ipv4Address addr = nodesSta[i].Get(j)
-						->GetObject<Ipv4>()
-						->GetAddress(1, 0) // Loopback (1-0)
-						.GetLocal();
+			// std::cout << "== AP " << i << " ==" << std::endl;
+			for(unsigned int j = 0; j < this->_associations[i].size(); j++) {
+				// std::cout << "\t* STA " << j << ":" << std::endl;
+				// IPv4 instance of the station
+				Ipv4Address addr = nodesSta[i].Get(j)
+					->GetObject<Ipv4>()
+					->GetAddress(1, 0) // Loopback (1-0)
+					.GetLocal();
 
-					for (unsigned int k = 0; k < programSteps.size(); k++) {
-						clientCT.SetAttribute ("RemoteAddress",AddressValue(addr));
-						clientCT.SetAttribute ("RemotePort",UintegerValue(port));
-						clientCT.SetAttribute ("MaxPackets", UintegerValue(1e9));
-						clientCT.SetAttribute ("Interval", TimeValue(Seconds(intervalsCross[i] / (dist(e2) < saturationProgram[k] ? 1.0 : nonSaturationRate))));
-						clientCT.SetAttribute ("PacketSize", UintegerValue(this->_packetSize));
+				for (unsigned int k = 0; k < programSteps.size(); k++) {
+					double rate = intervalsCross[i] / (dist(e2) < saturationProgram[k] ? 1.0 : nonSaturationRate);
+					this->_attainableThroughputs[k][i].push_back(8.0 * this->_packetSize / rate);
+					UdpClientHelper clientCT;//CT=cross traffic (from AP to stations)
+					clientCT.SetAttribute ("RemoteAddress",AddressValue(addr));
+					clientCT.SetAttribute ("RemotePort",UintegerValue(port));
+					clientCT.SetAttribute ("MaxPackets", UintegerValue(1e9));
+					clientCT.SetAttribute ("Interval", TimeValue(Seconds(rate)));
+					clientCT.SetAttribute ("PacketSize", UintegerValue(this->_packetSize));
 
-						// Installation on AP
-						ApplicationContainer apps = clientCT.Install(nodesAP.Get(i));
-						apps.Start(Seconds(applicationStart + duration * programSteps[k]));
-						apps.Stop(Seconds(applicationStart + duration * ((k < programSteps.size() - 1) ? programSteps[k+1] : 1.0)));
-					}
+					// Installation on AP
+					ApplicationContainer apps = clientCT.Install(nodesAP.Get(i));
+					// std::cout << "\t\tSTEP " << k << " from " << applicationStart + duration * programSteps[k] << "s to " << applicationStart + duration * ((k < programSteps.size() - 1) ? programSteps[k+1] : 1.0) << "s : " << 8 * this->_packetSize / (rate * 1e6) << " Mbps (" << rate << ")" << std::endl;
+					apps.Start(Seconds(applicationStart + duration * programSteps[k]));
+					apps.Stop(Seconds(applicationStart + duration * ((k < programSteps.size() - 1) ? programSteps[k+1] : 1.0)));
 				}
+			}
 		}
 
 		Simulator::Stop(Seconds(applicationEnd+0.01));
@@ -175,7 +183,6 @@ Simulation::Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, doub
 			unsigned int nStas = this->_associations[i].size();
 			this->_throughputs.push_back(std::vector<double>(nStas, 0));
 			this->_pers.push_back(std::vector<double>(nStas, 0));
-			this->_attainableThroughputs.push_back(std::vector<double>(nStas, this->_attainableThroughput / nStas));
 			this->_lastRxPackets.push_back(std::vector<unsigned int>(nStas, 0));
 			this->_lastLostPackets.push_back(std::vector<unsigned int>(nStas, 0));
 		}
@@ -262,6 +269,17 @@ double Simulation::rewardFromThroughputs() {
  * This function is called at each end of test
  */
 void Simulation::endOfTest() {
+	this->_cumulatedTime += this->_testDuration;
+	bool found = false;
+	for (unsigned int i = 1; i < this->_programSteps.size(); i++) {
+		if (this->_programSteps[i] * this->_duration > this->_cumulatedTime) {
+			this->_stepIndex = i-1;
+			found = true;
+			break;
+		}
+	}
+	if (!found) this->_stepIndex = this->_programSteps.size() - 1;
+
   // Compute the throughput
   this->computeThroughputsAndErrors();
 	// Store metrics
@@ -316,13 +334,13 @@ double Simulation::adHocRewardFromThroughputs() {
   double starvRew = 1, noStarvRew = 1, nStarv = 0, nNoStarv = 0;
   for (unsigned int i = 0; i < this->_throughputs.size(); i++)
     for (unsigned int j = 0; j < this->_throughputs[i].size(); j++) {
-      double threshold = 0.1 * this->_attainableThroughputs[i][j];
+      double threshold = 0.1 * this->_attainableThroughputs[this->_stepIndex][i][j];
       if (this->_throughputs[i][j] < threshold) {
         this->_throughputs[i][j] = std::max(this->_throughputs[i][j], 1.0);
         starvRew *= this->_throughputs[i][j] / threshold;
 				nStarv++;
       } else {
-				noStarvRew *= this->_throughputs[i][j] / this->_attainableThroughputs[i][j];
+				noStarvRew *= this->_throughputs[i][j] / this->_attainableThroughputs[this->_stepIndex][i][j];
 				nNoStarv++;
 			}
     }
@@ -343,7 +361,7 @@ double Simulation::fScoreRewardFromThroughputs() {
   for (unsigned int i = 0; i < this->_throughputs.size(); i++)
     for (unsigned int j = 0; j < this->_throughputs[i].size(); j++) {
       sum += this->_throughputs[i][j] / 1.0e6;
-			maxThroughput += this->_attainableThroughputs[i][j] / 1.0e6;
+			maxThroughput += this->_attainableThroughputs[this->_stepIndex][i][j] / 1.0e6;
     }
 	double cumThrough = sum / maxThroughput;
 
@@ -436,6 +454,7 @@ std::vector<double> Simulation::staPersFromPers() {
  */
 void Simulation::computeThroughputsAndErrors() {
   // Compute throughput for each server app
+	// double overall = 0;
   for (unsigned int i = 0; i < this->_serversPerAp.size(); i++) {
     std::vector<double> staAPThroughputs(this->_lastRxPackets[i].size());
 		std::vector<double> staPERs(this->_lastLostPackets[i].size());
@@ -452,18 +471,21 @@ void Simulation::computeThroughputsAndErrors() {
 
       double rxBytes = this->_packetSize * testReceivedPackets;
       // Compute the throughput considering only unseen bytes
-      double throughput = rxBytes * 8.0 / this->_testDuration; // bit/s
+      double throughput = std::min(rxBytes * 8.0 / this->_testDuration, this->_attainableThroughputs[this->_stepIndex][i][j]); // bit/s, std::min fixes bad approximations for short test periods
       // Update containers
       staAPThroughputs[j] = throughput;
 			staPERs[j] = per;
       this->_lastRxPackets[i][j] = receivedPackets;
 			this->_lastLostPackets[i][j] = lostPackets;
+			// overall += throughput / 1e6;
       // Log
       // std::cout << "Station " << j << " of AP " << i << " : " << (throughput / 1e6) << " Mbit/s" << std::endl;
     }
     this->_throughputs[i] = staAPThroughputs;
 		this->_pers[i] = staPERs;
   }
+
+	// std::cout << "OVERALL: " << overall << " Mbit/s" << std::endl;
 }
 
 /**
