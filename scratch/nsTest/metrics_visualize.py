@@ -575,17 +575,17 @@ for topo in topos:
 
 		# Plot the topology
 		plot2dTopology(topology, topo, receivingPower)
-		# # Plot the regret
-		# plotRegrets([t+"_rew.tsv" for t in templates], names, topo, legend=True)
-		# # # # # # Plot the cumulative regret for all the files
-		# plotCumRegrets([t+"_rew.tsv" for t in templates], names, topo)
-		# # # # # Throughputs des stations en fonction du temps
-		# plotSearchScalars([t+"_rew.tsv" for t in templates], names, "Reward", "Reward during the search", topo, legend=True)
-		# # Compute and plot starvations during search
-		# plotStarvations([t+"_stas.tsv" for t in templates], names, topology, 50e6, topo, legend=True)
-		# # # # # # Compute and plot fairness during search
-		# plotSearchScalars([t+"_fair.tsv" for t in templates], names, "Fairness",
-		# 		"Fairness during the search", topo, legend=True)
+		# Plot the regret
+		plotRegrets([t+"_rew.tsv" for t in templates], names, topo, legend=True)
+		# # # # # Plot the cumulative regret for all the files
+		plotCumRegrets([t+"_rew.tsv" for t in templates], names, topo)
+		# # # # Throughputs des stations en fonction du temps
+		plotSearchScalars([t+"_rew.tsv" for t in templates], names, "Reward", "Reward during the search", topo, legend=True)
+		# Compute and plot starvations during search
+		plotStarvations([t+"_stas.tsv" for t in templates], names, topology, 50e6, topo, legend=True)
+		# # # # # Compute and plot fairness during search
+		plotSearchScalars([t+"_fair.tsv" for t in templates], names, "Fairness",
+				"Fairness during the search", topo, legend=True)
 		# # # # Compute and plot fairness during search
 		plotSearchScalars([t+"_cum.tsv" for t in templates], names, "Cumulated Throughput (Mbps)",
 			"Cumulated Throughput during the search", topo, 1e6, legend=True)

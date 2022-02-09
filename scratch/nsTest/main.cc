@@ -139,8 +139,8 @@ int main (int argc, char *argv[]) {
 
   for (std::string topo: topos) {
     // Build a saturation regime
-    std::vector<double> times({0, 1.0/3.0, 2.0/3.0});
-    std::vector<double> saturatedStas({2.0/3.0, 1.0/3.0, 1.0});
+    std::vector<double> times({0, 1.0/2.0});
+    std::vector<double> saturatedStas({1.0, 0.0});
     // For each optimizer
     for (Optim o: optimizers) {
       // For each sampler
@@ -171,7 +171,7 @@ int main (int argc, char *argv[]) {
           }
 
           // Build the template of the output
-          std::string outputName = topo + "_" + doubleToString(duration) + "_" + oId + "_" + sId + "_" + rId + "_" + doubleToString(testDuration) + "_DIFSATURATION";
+          std::string outputName = topo + "_" + doubleToString(duration) + "_" + oId + "_" + sId + "_" + rId + "_" + doubleToString(testDuration) + "_TWOSATURATION";
 
           // Log
           std::cout << "Working on " << outputName << "..." << std::endl;
