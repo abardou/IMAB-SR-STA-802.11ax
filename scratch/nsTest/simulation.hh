@@ -21,14 +21,14 @@
 
 using namespace ns3;
 
-enum Optim { EGREEDY, THOMP_BETA, THOMP_GAMNORM, THOMP_NORM };
+enum Optim { EGREEDY, THOMP_BETA, THOMP_GAMNORM, THOMP_NORM, THOMP_GAMNORM_WINDOW };
 enum Samp { UNIF, HGM };
 enum Reward { AD_HOC, FSCORE };
 enum Dist { LOG, SQRT, N2, N4 };
 
 class Simulation {
 	public:
-		Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, double duration, double testDuration, std::string outputName, std::vector<double> programSteps = {0.0}, std::vector<double> saturationProgram = {1.0}, double beta=1.0);
+		Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, double duration, double testDuration, std::string outputName, std::vector<double> programSteps = {0.0}, std::vector<double> saturationProgram = {1.0}, unsigned int windowSize = 1, double beta=1.0);
 		pid_t getPID() const;
 		void readTopology(std::string path);
 		void storeMetrics();
@@ -55,6 +55,7 @@ class Simulation {
 		double _duration;
 		double _testDuration;
 		double _beta;
+		double _windowSize;
 		std::vector<double> _rewards;
 		std::vector<double> _fairness;
 		std::vector<double> _cumulatedThroughput;

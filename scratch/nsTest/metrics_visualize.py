@@ -582,7 +582,7 @@ for topo in topos:
 		# # # # Throughputs des stations en fonction du temps
 		plotSearchScalars([t+"_rew.tsv" for t in templates], names, "Reward", "Reward during the search", topo, legend=True)
 		# Compute and plot starvations during search
-		plotStarvations([t+"_stas.tsv" for t in templates], names, topology, 50e6, topo, legend=True)
+		# plotStarvations([t+"_stas.tsv" for t in templates], names, topology, 50e6, topo, legend=True)
 		# # # # # Compute and plot fairness during search
 		plotSearchScalars([t+"_fair.tsv" for t in templates], names, "Fairness",
 				"Fairness during the search", topo, legend=True)

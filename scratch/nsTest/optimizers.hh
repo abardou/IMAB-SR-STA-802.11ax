@@ -49,6 +49,17 @@ class ThompsonGammaNormalOptimizer : public Optimizer {
 		double _add;
 };
 
+class ThompsonGammaNormalWindowOptimizer : public Optimizer {
+	public:
+		ThompsonGammaNormalWindowOptimizer(Sampler* sampler, unsigned int sampleSize, unsigned int windowSize);
+		virtual void addToBase(NetworkConfiguration configuration, double reward);
+		virtual NetworkConfiguration optimize();
+
+	protected:
+		unsigned int _sampleSize;
+		unsigned int _windowSize;
+};
+
 using NormalParameters = std::tuple<double, double, unsigned int>;
 class ThompsonNormalOptimizer : public Optimizer {
 	public:

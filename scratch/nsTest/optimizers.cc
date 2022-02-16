@@ -219,6 +219,120 @@ NetworkConfiguration ThompsonGammaNormalOptimizer::optimize() {
 }
 
 /**
+ * Build a ThompsonGammaNormalWindowOptimizer
+ * 
+ * @param sampler Sampler* the sampler to draw new configurations from
+ * @param sampleSize unsigned int the sample size to use for update
+ * @param add double the exploration parameter
+ */
+ThompsonGammaNormalWindowOptimizer::ThompsonGammaNormalWindowOptimizer(Sampler* sampler, unsigned int sampleSize, unsigned int windowSize): Optimizer(sampler), _sampleSize(sampleSize), _windowSize(windowSize) {  }
+
+/**
+ * Add an observation to the optimizer and its associated sampler.
+ * 
+ * @param configuration NetworkConfiguration the network configuration
+ * @param reward double the reward associated to the configuration 
+ */
+void ThompsonGammaNormalWindowOptimizer::addToBase(NetworkConfiguration configuration, double reward) {
+	Optimizer::addToBase(configuration, reward);
+}
+
+/**
+ * Find the best configuration according to ThompsonGammaNormal strategy
+ * 
+ * @return the best configuration according to ThompsonGammaNormal strategy 
+ */
+NetworkConfiguration ThompsonGammaNormalWindowOptimizer::optimize() {
+	// this->showDecisions();
+
+	// Get the window
+	unsigned int historySize = std::min(this->_windowSize, (unsigned int) this->_history.size());
+	History window = History(this->_history.end() - historySize, this->_history.end());
+
+	// std::cout << "WINDOW: ";
+	// for (std::tuple<NetworkConfiguration, double> t: window) {
+	// 	std::cout << std::get<1>(t) << " ";
+	// }
+	// std::cout << std::endl;
+	// Get the candidates
+	std::vector<NetworkConfiguration> uniques;
+	std::vector<std::tuple<unsigned int, double, double>> stats;
+	for (std::tuple<NetworkConfiguration, double> t: window) {
+		NetworkConfiguration c = std::get<0>(t);
+		double rew = std::get<1>(t);
+		std::vector<NetworkConfiguration>::iterator it = std::find(uniques.begin(), uniques.end(), c);
+		if (it == uniques.end()) {
+			uniques.push_back(c);
+			stats.push_back(std::make_tuple(1, rew, rew * rew));
+		} else {
+			unsigned int idx = std::distance(uniques.begin(), it);
+			std::get<0>(stats[idx]) += 1;
+			std::get<1>(stats[idx]) += rew;
+			std::get<2>(stats[idx]) += rew * rew;			
+		}
+	}
+
+	// Explore or exploit
+	std::uniform_real_distribution<> real_dist;
+	bool explore = real_dist(this->_generator) < 0.1;
+	if (explore) {
+		// Request a new configuration to the sampler
+		std::vector<NetworkConfiguration> forbidden;
+		for (NetworkConfiguration c: uniques)
+			forbidden.push_back(c);
+		NetworkConfiguration sampled = (*this->_sampler)(forbidden);
+		if (std::get<0>(sampled[0]) != 0)
+			return sampled;
+	}
+
+	// Look for not enough explored configurations
+	std::vector<NetworkConfiguration> toExplore;
+	for (unsigned int i = 0; i < uniques.size(); i++)
+		if (std::get<0>(stats[i]) < this->_sampleSize) {
+			unsigned int idxAppearance = 0;
+			for (std::tuple<NetworkConfiguration, double> t: this->_history) {
+				if (std::get<0>(t) == uniques[i]) {
+					break;
+				}
+				idxAppearance++;
+			}
+			if (historySize < this->_windowSize || idxAppearance / this->_windowSize > 0.5)
+				toExplore.push_back(uniques[i]);
+		}
+	if (!toExplore.empty()) {
+		// Test a not enough explored configuration
+		std::uniform_int_distribution<> d(0, toExplore.size()-1);
+		return toExplore[d(this->_generator)];
+	} else {
+		// Sample taus for normal distributions
+		std::vector<double> mus(uniques.size());
+		int i = -1;
+		for (NetworkConfiguration c: uniques) {
+			i++;
+			// Compute NormalGamma parameters
+			unsigned int size = std::get<0>(stats[i]);
+			if (size == 1) {
+				mus[i] = -1000;
+				continue;
+			}
+			double mean = std::get<1>(stats[i]) / size, var = std::get<2>(stats[i]) / size - mean * mean;
+			double mu = mean,
+						 lambda = size,
+						 alpha = size / 2.0,
+						 beta = size * var / 2.0;
+			std::gamma_distribution<> gamma(alpha, 1.0 / beta);
+			double tau = gamma(this->_generator);
+			std::normal_distribution<> normal(mu, 1.0 / sqrt(lambda * tau));
+			mus[i] = normal(this->_generator);
+		}
+		int maxElementIndex = std::max_element(mus.begin(), mus.end()) - mus.begin();
+
+		return uniques[maxElementIndex];
+	}
+}
+
+
+/**
  * Build a ThompsonNormalOptimizer
  * 
  * @param sampler Sampler* the sampler to draw new configurations from

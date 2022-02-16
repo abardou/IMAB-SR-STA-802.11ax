@@ -13,7 +13,7 @@
  * @param outputName std::string the output file name
  * @param beta double the beta parameter for FSCORE reward
  */ 
-Simulation::Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, double duration, double testDuration, std::string outputName, std::vector<double> programSteps, std::vector<double> saturationProgram, double beta) : _rewardType(r), _duration(duration), _testDuration(testDuration), _beta(beta), _programSteps(programSteps) {
+Simulation::Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, double duration, double testDuration, std::string outputName, std::vector<double> programSteps, std::vector<double> saturationProgram, unsigned int windowSize, double beta) : _rewardType(r), _duration(duration), _testDuration(testDuration), _beta(beta), _windowSize(windowSize), _programSteps(programSteps) {
 	this->_pid = fork();
 	if (this->_pid == 0) {
 		// Child process
@@ -205,6 +205,7 @@ Simulation::Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, doub
 			case EGREEDY: this->_optimizer = new EpsilonGreedyOptimizer(sampler, 0.09); break;
 			case THOMP_BETA: this->_optimizer = new ThompsonBetaOptimizer(sampler, 2.4); break; // 2
 			case THOMP_GAMNORM: this->_optimizer = new ThompsonGammaNormalOptimizer(sampler, 2, 2.4); break;
+			case THOMP_GAMNORM_WINDOW: this->_optimizer = new ThompsonGammaNormalWindowOptimizer(sampler, 2, this->_windowSize); break;
 			case THOMP_NORM: this->_optimizer = new ThompsonNormalOptimizer(sampler, 2.4); break; 
 		}
 
