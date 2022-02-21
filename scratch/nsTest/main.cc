@@ -124,12 +124,12 @@ int main (int argc, char *argv[]) {
   // Number of simulations to run
   unsigned int nSimulations = 25;
   // Duration of a single simulation
-  double duration = 120.0;
+  double duration = 60.0;
   // Duration of a single test
   double testDuration = 0.05;
-  std::vector<unsigned int> window_size({200, 400, 600});
+  std::vector<unsigned int> window_size({100000000});
   // Optimizers to test
-  std::vector<Optim> optimizers({THOMP_GAMNORM_WINDOW});
+  std::vector<Optim> optimizers({THOMP_GAMNORM});
   // Samplers to test
   std::vector<Samp> samplers({HGM});
   // Rewards to test
@@ -141,8 +141,8 @@ int main (int argc, char *argv[]) {
   for (unsigned int window: window_size) {
     for (std::string topo: topos) {
       // Build a saturation regime
-      std::vector<double> times({0, 1.0/3.0, 2.0/3.0});
-      std::vector<double> saturatedStas({2.0/3.0, 1.0/3.0, 1.0});
+      std::vector<double> times({0});
+      std::vector<double> saturatedStas({2.0/3.0});
       // For each optimizer
       for (Optim o: optimizers) {
         // For each sampler
