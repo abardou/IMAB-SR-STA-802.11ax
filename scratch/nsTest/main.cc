@@ -174,7 +174,7 @@ int main (int argc, char *argv[]) {
             }
 
             // Build the template of the output
-            std::string outputName = topo + "_" + doubleToString(duration) + "_" + oId + "_" + std::to_string(window) + "_" + sId + "_" + rId + "_" + doubleToString(testDuration) + "_DIFSATURATION";
+            std::string outputName = topo + "_" + doubleToString(duration) + "_" + oId + "_" + sId + "_" + rId + "_" + doubleToString(testDuration) + "_2_3";
 
             // Log
             std::cout << "Working on " << outputName << "..." << std::endl;
