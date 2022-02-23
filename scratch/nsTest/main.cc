@@ -124,7 +124,7 @@ int main (int argc, char *argv[]) {
   // Number of simulations to run
   unsigned int nSimulations = 25;
   // Duration of a single simulation
-  double duration = 60.0;
+  double duration = 90.0;
   // Duration of a single test
   double testDuration = 0.05;
   std::vector<unsigned int> window_size({100000000});

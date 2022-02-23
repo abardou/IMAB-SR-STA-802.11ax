@@ -556,17 +556,17 @@ def plotRewardFunctionCut(path):
 
 # plotRewardFunctionCut("./data/MER_FLOORS_CH20_S5_RandomBasis_results.tsv")
 
-duration = 120.0
+duration = 60.0
 testDurations = [0.05]
 
 topos = ["T12"]
-tests = ["TGNORM_HGMT_ADHOC", "TGNORM_WIN_200_HGMT_ADHOC", "TGNORM_WIN_400_HGMT_ADHOC", "TGNORM_WIN_600_HGMT_ADHOC"]
+tests = ["TGNORM_HGMT_ADHOC"]
 
 for topo in topos:
 	for testDuration in testDurations:
-		templates = ['data/' + topo + '_' + str(duration) + '_' + t + '_' + str(testDuration) + '_DIFSATURATION' for t in tests]
+		templates = ['data/' + topo + '_' + str(duration) + '_' + t + '_' + str(testDuration) + '_2_3' for t in tests]
 		# names = ["BEST 0.7"]
-		names = ["Our Solution", "WIN 200", "WIN 400", "WIN 600"]
+		names = ["Our Solution"]
 		topology = 'topos/'+topo+".json"
 		print(topology)
 		print("Average STA-AP distance:", averageSTAAPDistance(topology))
@@ -576,21 +576,21 @@ for topo in topos:
 		# Plot the topology
 		plot2dTopology(topology, topo, receivingPower)
 		# Plot the regret
-		plotRegrets([t+"_rew.tsv" for t in templates], names, topo, legend=True)
-		# # # # # Plot the cumulative regret for all the files
-		plotCumRegrets([t+"_rew.tsv" for t in templates], names, topo)
-		# # # # Throughputs des stations en fonction du temps
-		plotSearchScalars([t+"_rew.tsv" for t in templates], names, "Reward", "Reward during the search", topo, legend=True)
-		# Compute and plot starvations during search
-		# plotStarvations([t+"_stas.tsv" for t in templates], names, topology, 50e6, topo, legend=True)
+		# plotRegrets([t+"_rew.tsv" for t in templates], names, topo, legend=True)
+		# # # # # # Plot the cumulative regret for all the files
+		# plotCumRegrets([t+"_rew.tsv" for t in templates], names, topo)
+		# # # # # Throughputs des stations en fonction du temps
+		# plotSearchScalars([t+"_rew.tsv" for t in templates], names, "Reward", "Reward during the search", topo, legend=True)
+		# # Compute and plot starvations during search
+		# # plotStarvations([t+"_stas.tsv" for t in templates], names, topology, 50e6, topo, legend=True)
+		# # # # # # Compute and plot fairness during search
+		# plotSearchScalars([t+"_fair.tsv" for t in templates], names, "Fairness",
+		# 		"Fairness during the search", topo, legend=True)
 		# # # # # Compute and plot fairness during search
-		plotSearchScalars([t+"_fair.tsv" for t in templates], names, "Fairness",
-				"Fairness during the search", topo, legend=True)
-		# # # # Compute and plot fairness during search
-		plotSearchScalars([t+"_cum.tsv" for t in templates], names, "Cumulated Throughput (Mbps)",
-			"Cumulated Throughput during the search", topo, 1e6, legend=True)
+		# plotSearchScalars([t+"_cum.tsv" for t in templates], names, "Cumulated Throughput (Mbps)",
+		# 	"Cumulated Throughput during the search", topo, 1e6, legend=True)
 		# # Extract and print the best configuration for all the files
-		# plotBestConfigurations([t+"_conf.tsv" for t in templates], [t+"_stas.tsv" for t in templates], names, topo, topology, [t+"_rew.tsv" for t in templates])
+		plotBestConfigurations([t+"_conf.tsv" for t in templates], [t+"_stas.tsv" for t in templates], names, topo, topology, [t+"_rew.tsv" for t in templates])
 		# # # Compute and plot fairness to compare between simulations
 		# compareScalars([t+"_conf.tsv" for t in templates], [t+"_rew.tsv" for t in templates], [t+"_fair.tsv" for t in templates], names, "Strategies", "Fairness",
 		# 	"Fairness distribution for each best configuration found", topo)
