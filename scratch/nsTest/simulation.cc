@@ -13,7 +13,7 @@
  * @param outputName std::string the output file name
  * @param beta double the beta parameter for FSCORE reward
  */ 
-Simulation::Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, double duration, double testDuration, std::string outputName, std::vector<double> programSteps, std::vector<double> saturationProgram, unsigned int windowSize, double beta) : _rewardType(r), _duration(duration), _testDuration(testDuration), _beta(beta), _windowSize(windowSize), _programSteps(programSteps) {
+Simulation::Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, double duration, double testDuration, std::string outputName, std::vector<double> programSteps, std::vector<double> saturationProgram, unsigned int windowSize, NetworkConfiguration defaultConf, double beta) : _rewardType(r), _duration(duration), _testDuration(testDuration), _beta(beta), _windowSize(windowSize), _programSteps(programSteps) {
 	this->_pid = fork();
 	if (this->_pid == 0) {
 		// Child process
@@ -34,6 +34,14 @@ Simulation::Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, doub
 		std::vector<double> intervalsCross(numberOfAPs);
 		for (unsigned int i = 0; i < numberOfAPs; i++) intervalsCross[i] = this->_interval * this->_associations[i].size();
 
+		if (defaultConf.size() == 0) {
+			for (unsigned int i = 0; i < numberOfAPs; i++) {
+				this->_configuration.push_back(std::make_tuple(this->_defaultSensibility, this->_defaultPower));
+			}
+		} else {
+			this->_configuration = defaultConf;
+		}
+
 		// APs creation and configuration
 		// At the start, they're all configured with 802.11 default conf
 		NodeContainer nodesAP;
@@ -46,10 +54,10 @@ Simulation::Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, doub
 			wifiPhy[i].Set("MaxSupportedTxSpatialStreams", UintegerValue(2));
 			wifiPhy[i].Set("MaxSupportedRxSpatialStreams", UintegerValue(2));
 			wifiPhy[i].Set("ChannelNumber", UintegerValue(channel));
-			wifiPhy[i].Set("RxSensitivity", DoubleValue(this->_defaultSensibility));
-			wifiPhy[i].Set("CcaEdThreshold", DoubleValue(this->_defaultSensibility));
-			wifiPhy[i].Set("TxPowerStart", DoubleValue(this->_defaultPower));
-			wifiPhy[i].Set("TxPowerEnd", DoubleValue(this->_defaultPower));
+			wifiPhy[i].Set("RxSensitivity", DoubleValue(std::get<0>(this->_configuration[i])));
+			wifiPhy[i].Set("CcaEdThreshold", DoubleValue(std::get<0>(this->_configuration[i])));
+			wifiPhy[i].Set("TxPowerStart", DoubleValue(std::get<1>(this->_configuration[i])));
+			wifiPhy[i].Set("TxPowerEnd", DoubleValue(std::get<1>(this->_configuration[i])));
 		}
 
 		// Stations creation and configuration
@@ -172,10 +180,6 @@ Simulation::Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, doub
 		Simulator::Stop(Seconds(applicationEnd+0.01));
 
 		// Optimization relative objects
-		// Init callback for configuration changes
-		for (unsigned int i = 0; i < numberOfAPs; i++) {
-			this->_configuration.push_back(std::make_tuple(this->_defaultSensibility, this->_defaultPower));
-		}
 		Simulator::Schedule(Seconds(applicationStart+testDuration), &Simulation::endOfTest, this);
 
 		// Init containers for throughput calculation
@@ -207,6 +211,7 @@ Simulation::Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, doub
 			case THOMP_GAMNORM: this->_optimizer = new ThompsonGammaNormalOptimizer(sampler, 2, 2.4); break;
 			case THOMP_GAMNORM_WINDOW: this->_optimizer = new ThompsonGammaNormalWindowOptimizer(sampler, 2, this->_windowSize); break;
 			case THOMP_NORM: this->_optimizer = new ThompsonNormalOptimizer(sampler, 2.4); break; 
+			case IDLEOPT: this->_optimizer = new IdleOptimizer(); break;
 		}
 
 		std::cout << "ns3-debug: the simulation begins" << std::endl;
@@ -285,6 +290,7 @@ void Simulation::endOfTest() {
   this->computeThroughputsAndErrors();
 	// Store metrics
 	this->storeMetrics();
+
   // Compute reward accordingly
   double rew = this->rewardFromThroughputs();
 

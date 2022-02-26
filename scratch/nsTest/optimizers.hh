@@ -49,6 +49,16 @@ class ThompsonGammaNormalOptimizer : public Optimizer {
 		double _add;
 };
 
+class IdleOptimizer : public Optimizer {
+	public:
+		IdleOptimizer();
+		virtual void addToBase(NetworkConfiguration configuration, double reward);
+		virtual NetworkConfiguration optimize();
+
+	protected:
+		NetworkConfiguration _config;
+};
+
 class ThompsonGammaNormalWindowOptimizer : public Optimizer {
 	public:
 		ThompsonGammaNormalWindowOptimizer(Sampler* sampler, unsigned int sampleSize, unsigned int windowSize);

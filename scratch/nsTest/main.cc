@@ -124,78 +124,89 @@ int main (int argc, char *argv[]) {
   // Number of simulations to run
   unsigned int nSimulations = 25;
   // Duration of a single simulation
-  double duration = 90.0;
+  double duration = 30.0;
   // Duration of a single test
   double testDuration = 0.05;
   std::vector<unsigned int> window_size({100000000});
-  // Optimizers to test
-  std::vector<Optim> optimizers({THOMP_GAMNORM});
-  // Samplers to test
-  std::vector<Samp> samplers({HGM});
-  // Rewards to test
-  std::vector<Reward> rewards({AD_HOC});
-  // Topos to test
-  std::vector<std::string> topos({"T12"});
-  // For each topo
+  std::vector<std::vector<double>> vec_times({std::vector<double>({0})});
+  std::vector<std::vector<double>> vec_saturatedStas({std::vector<double>({0}), std::vector<double>({1.0/3.0}), std::vector<double>({2.0/3.0}), std::vector<double>({1.0})});
+  std::vector<std::vector<double>> vec_defaultConfig({std::vector<double>({-81,18,-82,16,-82,18,-81,16,-80,17,-81,17,-80,17,-80,16,-81,19,-80,18}), std::vector<double>()});
+  for (std::vector<double> defaultConfig: vec_defaultConfig) {
+    for (std::vector<double> times: vec_times) {
+      for (std::vector<double> saturatedStas: vec_saturatedStas) {
+        NetworkConfiguration nc_default;
+        for (unsigned int i = 0; i < defaultConfig.size(); i += 2) {
+          nc_default.push_back(std::make_tuple(defaultConfig[i], defaultConfig[i+1]));
+        }
+        // Optimizers to test
+        std::vector<Optim> optimizers({IDLEOPT});
+        // Samplers to test
+        std::vector<Samp> samplers({UNIF});
+        // Rewards to test
+        std::vector<Reward> rewards({AD_HOC});
+        // Topos to test
+        std::vector<std::string> topos({"T12"});
+        // For each topo
 
-  for (unsigned int window: window_size) {
-    for (std::string topo: topos) {
-      // Build a saturation regime
-      std::vector<double> times({0});
-      std::vector<double> saturatedStas({2.0/3.0});
-      // For each optimizer
-      for (Optim o: optimizers) {
-        // For each sampler
-        for (Samp s: samplers) {
-          // Don't test some combinations
-          if ((s == UNIF && (o == THOMP_GAMNORM)) || (s == HGM && o == EGREEDY)) {
-            continue;
-          }
-          // For each reward
-          for (Reward r: rewards) {
-            // Find the right identifiers
-            std::string oId = "", sId = "", rId = "";
-            switch (o) {
-              case THOMP_GAMNORM: oId = "TGNORM"; break;
-              case THOMP_GAMNORM_WINDOW: oId = "TGNORM_WIN"; break;
-              case THOMP_BETA: oId = "TBETA"; break;
-              case THOMP_NORM: oId = "TNORM"; break;
-              case EGREEDY: oId = "EGREED"; break;      
+        for (unsigned int window: window_size) {
+          for (std::string topo: topos) {
+            // For each optimizer
+            for (Optim o: optimizers) {
+              // For each sampler
+              for (Samp s: samplers) {
+                // Don't test some combinations
+                if ((s == UNIF && (o == THOMP_GAMNORM)) || (s == HGM && o == EGREEDY)) {
+                  continue;
+                }
+                // For each reward
+                for (Reward r: rewards) {
+                  // Find the right identifiers
+                  std::string oId = "", sId = "", rId = "";
+                  switch (o) {
+                    case THOMP_GAMNORM: oId = "TGNORM"; break;
+                    case THOMP_GAMNORM_WINDOW: oId = "TGNORM_WIN"; break;
+                    case THOMP_BETA: oId = "TBETA"; break;
+                    case THOMP_NORM: oId = "TNORM"; break;
+                    case EGREEDY: oId = "EGREED"; break;
+                    case IDLEOPT: oId = defaultConfig.size() == 0 ? "DEFAULT" : "IDLE";
+                  }
+
+                  switch (s) {
+                    case HGM: sId = "HGMT"; break;
+                    case UNIF: sId = "UNI"; break;
+                  }
+
+                  switch (r) {
+                    case AD_HOC: rId = "ADHOC"; break;
+                    case FSCORE: rId = "FSCORE"; break;
+                  }
+
+                  // Build the template of the output
+                  std::string outputName = topo + "_" + doubleToString(duration) + "_" + oId + "_" + sId + "_" + rId + "_" + doubleToString(testDuration) + "_" + doubleToString(saturatedStas[0]);
+
+                  // Log
+                  std::cout << "Working on " << outputName << "..." << std::endl;
+
+                  // Launching nSimulations simulations
+                  std::vector<Simulation*> simulations(nSimulations);
+                  for (unsigned int i = 0; i < nSimulations; i++) {
+                    simulations[i] = new Simulation(o, s, r, "./scratch/nsTest/topos/" + topo + ".json", duration, testDuration, outputName + "_" + std::to_string(i) + ".tsv", times, saturatedStas, window, nc_default);
+                  }
+
+                  // Wait for all simulations to finish
+                  for (unsigned int i = 0; i < nSimulations; i++) {
+                    waitpid(simulations[i]->getPID(), NULL, 0);
+                    delete simulations[i];
+                  }
+                  std::cout << "Simulations terminated" << std::endl;
+
+                  // Aggregate the data
+                  aggregateSimulationsResults("./scratch/nsTest/data/"+outputName, "./scratch/nsTest/data/"+outputName+"_",
+                                              nSimulations, duration / testDuration);
+                  std::cout << "Aggregation terminated" << std::endl << std::endl;
+                }
+              }
             }
-
-            switch (s) {
-              case HGM: sId = "HGMT"; break;
-              case UNIF: sId = "UNI"; break;
-            }
-
-            switch (r) {
-              case AD_HOC: rId = "ADHOC"; break;
-              case FSCORE: rId = "FSCORE"; break;
-            }
-
-            // Build the template of the output
-            std::string outputName = topo + "_" + doubleToString(duration) + "_" + oId + "_" + sId + "_" + rId + "_" + doubleToString(testDuration) + "_2_3";
-
-            // Log
-            std::cout << "Working on " << outputName << "..." << std::endl;
-
-            // Launching nSimulations simulations
-            std::vector<Simulation*> simulations(nSimulations);
-            for (unsigned int i = 0; i < nSimulations; i++) {
-              simulations[i] = new Simulation(o, s, r, "./scratch/nsTest/topos/" + topo + ".json", duration, testDuration, outputName + "_" + std::to_string(i) + ".tsv", times, saturatedStas, window);
-            }
-
-            // Wait for all simulations to finish
-            for (unsigned int i = 0; i < nSimulations; i++) {
-              waitpid(simulations[i]->getPID(), NULL, 0);
-              delete simulations[i];
-            }
-            std::cout << "Simulations terminated" << std::endl;
-
-            // Aggregate the data
-            aggregateSimulationsResults("./scratch/nsTest/data/"+outputName, "./scratch/nsTest/data/"+outputName+"_",
-                                        nSimulations, duration / testDuration);
-            std::cout << "Aggregation terminated" << std::endl << std::endl;
           }
         }
       }

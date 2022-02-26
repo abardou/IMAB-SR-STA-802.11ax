@@ -556,7 +556,7 @@ def plotRewardFunctionCut(path):
 
 # plotRewardFunctionCut("./data/MER_FLOORS_CH20_S5_RandomBasis_results.tsv")
 
-duration = 60.0
+duration = 90.0
 testDurations = [0.05]
 
 topos = ["T12"]

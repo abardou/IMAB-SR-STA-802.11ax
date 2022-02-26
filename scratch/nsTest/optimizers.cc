@@ -21,7 +21,9 @@ Optimizer::~Optimizer() {  }
  */
 void Optimizer::addToBase(NetworkConfiguration configuration, double reward) {
 	this->_history.push_back(std::make_tuple(configuration, reward));
-	this->_sampler->addToBase(configuration, reward);
+	if (this->_sampler != nullptr) {
+		this->_sampler->addToBase(configuration, reward);
+	}
 }
 
 /**
@@ -57,6 +59,18 @@ void Optimizer::showDecisions() const {
 	}
 	std::cout << " ]" << std::endl;
 } 
+
+IdleOptimizer::IdleOptimizer() : Optimizer(nullptr) {  }
+
+void IdleOptimizer::addToBase(NetworkConfiguration configuration, double reward) {
+	Optimizer::addToBase(configuration, reward);
+
+	this->_config = configuration;
+}
+
+NetworkConfiguration IdleOptimizer::optimize() {
+	return this->_config;
+}
 
 /**
  * Build an EpsilonGreedyOptimizer
