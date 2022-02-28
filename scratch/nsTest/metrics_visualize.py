@@ -556,17 +556,18 @@ def plotRewardFunctionCut(path):
 
 # plotRewardFunctionCut("./data/MER_FLOORS_CH20_S5_RandomBasis_results.tsv")
 
-duration = 90.0
+duration = 30.0
 testDurations = [0.05]
 
 topos = ["T12"]
-tests = ["TGNORM_HGMT_ADHOC"]
+tests = ["DEFAULT_UNI_ADHOC", "IDLE_UNI_ADHOC"]
+# saturation = [0.0, 0.333333, 0.666667, 1.0]
 
 for topo in topos:
 	for testDuration in testDurations:
-		templates = ['data/' + topo + '_' + str(duration) + '_' + t + '_' + str(testDuration) + '_2_3' for t in tests]
+		templates = ['data/' + topo + '_' + str(duration) + '_' + t + '_' + str(testDuration) + '_1.0' for t in tests]
 		# names = ["BEST 0.7"]
-		names = ["Our Solution"]
+		names = ["DEFAULT", "OURS"]
 		topology = 'topos/'+topo+".json"
 		print(topology)
 		print("Average STA-AP distance:", averageSTAAPDistance(topology))
@@ -576,7 +577,7 @@ for topo in topos:
 		# Plot the topology
 		plot2dTopology(topology, topo, receivingPower)
 		# Plot the regret
-		# plotRegrets([t+"_rew.tsv" for t in templates], names, topo, legend=True)
+		plotRegrets([t+"_rew.tsv" for t in templates], names, topo, legend=True)
 		# # # # # # Plot the cumulative regret for all the files
 		# plotCumRegrets([t+"_rew.tsv" for t in templates], names, topo)
 		# # # # # Throughputs des stations en fonction du temps

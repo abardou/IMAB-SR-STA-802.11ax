@@ -18,6 +18,12 @@ Simulation::Simulation(Optim oId, Samp sId, Reward r, std::string topoPath, doub
 	if (this->_pid == 0) {
 		// Child process
 
+		// Random generator
+		struct timeval time; 
+    gettimeofday(&time,NULL);
+		unsigned int seed = (time.tv_sec * 10) + (time.tv_usec / 10);
+		RngSeedManager::SetSeed(seed);
+
 		// Topology
 		this->readTopology(topoPath);
 
