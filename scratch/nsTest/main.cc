@@ -124,13 +124,13 @@ int main (int argc, char *argv[]) {
   // Number of simulations to run
   unsigned int nSimulations = 25;
   // Duration of a single simulation
-  double duration = 30.0;
+  double duration = 90.0;
   // Duration of a single test
   double testDuration = 0.05;
   std::vector<unsigned int> window_size({100000000});
   std::vector<std::vector<double>> vec_times({std::vector<double>({0})});
-  std::vector<std::vector<double>> vec_saturatedStas({std::vector<double>({0}), std::vector<double>({1.0/3.0}), std::vector<double>({2.0/3.0}), std::vector<double>({1.0})});
-  std::vector<std::vector<double>> vec_defaultConfig({std::vector<double>({-81,18,-82,16,-82,18,-81,16,-80,17,-81,17,-80,17,-80,16,-81,19,-80,18}), std::vector<double>()});
+  std::vector<std::vector<double>> vec_saturatedStas({std::vector<double>({2.0/3.0})}); // std::vector<double>({0}), std::vector<double>({1.0/3.0}), std::vector<double>({1.0})
+  std::vector<std::vector<double>> vec_defaultConfig({std::vector<double>()}); // std::vector<double>({-81,18,-82,16,-82,18,-81,16,-80,17,-81,17,-80,17,-80,16,-81,19,-80,18})
   for (std::vector<double> defaultConfig: vec_defaultConfig) {
     for (std::vector<double> times: vec_times) {
       for (std::vector<double> saturatedStas: vec_saturatedStas) {
@@ -139,7 +139,7 @@ int main (int argc, char *argv[]) {
           nc_default.push_back(std::make_tuple(defaultConfig[i], defaultConfig[i+1]));
         }
         // Optimizers to test
-        std::vector<Optim> optimizers({IDLEOPT});
+        std::vector<Optim> optimizers({THOMP_NORM});
         // Samplers to test
         std::vector<Samp> samplers({UNIF});
         // Rewards to test

@@ -20,7 +20,7 @@ import json
 
 plt.rcParams.update({'font.size': 22})
 
-alpha = 0.04
+alpha = 1.0 # 0.04
 
 mc = 3000
 ncol = 2
@@ -579,7 +579,7 @@ for topo in topos:
 		# Plot the regret
 		plotRegrets([t+"_rew.tsv" for t in templates], names, topo, legend=True)
 		# # # # # # Plot the cumulative regret for all the files
-		# plotCumRegrets([t+"_rew.tsv" for t in templates], names, topo)
+		plotCumRegrets([t+"_rew.tsv" for t in templates], names, topo)
 		# # # # # Throughputs des stations en fonction du temps
 		# plotSearchScalars([t+"_rew.tsv" for t in templates], names, "Reward", "Reward during the search", topo, legend=True)
 		# # Compute and plot starvations during search
