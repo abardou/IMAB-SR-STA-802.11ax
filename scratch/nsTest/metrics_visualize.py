@@ -556,16 +556,16 @@ def plotRewardFunctionCut(path):
 
 # plotRewardFunctionCut("./data/MER_FLOORS_CH20_S5_RandomBasis_results.tsv")
 
-duration = 30.0
+duration = 90.0
 testDurations = [0.05]
 
 topos = ["T12"]
-tests = ["DEFAULT_UNI_ADHOC", "IDLE_UNI_ADHOC"]
+tests = ["TNORM_UNI_ADHOC"]
 # saturation = [0.0, 0.333333, 0.666667, 1.0]
 
 for topo in topos:
 	for testDuration in testDurations:
-		templates = ['data/' + topo + '_' + str(duration) + '_' + t + '_' + str(testDuration) + '_1.0' for t in tests]
+		templates = ['data/' + topo + '_' + str(duration) + '_' + t + '_' + str(testDuration) + '_0.666667' for t in tests]
 		# names = ["BEST 0.7"]
 		names = ["DEFAULT", "OURS"]
 		topology = 'topos/'+topo+".json"
