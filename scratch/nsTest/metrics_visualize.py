@@ -559,18 +559,18 @@ def plotRewardFunctionCut(path):
 
 # plotRewardFunctionCut("./data/MER_FLOORS_CH20_S5_RandomBasis_results.tsv")
 
-duration = 30.0
+duration = 120.0
 testDurations = [0.05]
 
-topos = ["T12"]
-tests = ["DEFAULT_UNI_ADHOC", "IDLE_TNORM_UNI_ADHOC", "IDLE_UNI_ADHOC"]
+topos = ["T7", "C6o", "T12"]
+tests = ["EGREED_UNI_ADHOC", "TNORM_UNI_ADHOC", "TNORM_HGMT_ADHOC", "TGNORM_HGMT_ADHOC"]
 # saturation = [0.0, 0.333333, 0.666667, 1.0]
 
 for topo in topos:
 	for testDuration in testDurations:
-		templates = ['data/' + topo + '_' + str(duration) + '_' + t + '_' + str(testDuration) + '_1.0' for t in tests]
+		templates = ['data/' + topo + '_' + str(duration) + '_' + t + '_' + str(testDuration) for t in tests]
 		# names = ["BEST 0.7"]
-		names = ["DEFAULT", "SOTA", "OURS"]
+		names = ["EGREEDY", "TS", "GM-TS", "OURS"]
 		topology = 'topos/'+topo+".json"
 		print(topology)
 		print("Average STA-AP distance:", averageSTAAPDistance(topology))
@@ -586,7 +586,7 @@ for topo in topos:
 		# # # # # Throughputs des stations en fonction du temps
 		plotSearchScalars([t+"_rew.tsv" for t in templates], names, "Reward", "Reward during the search", topo, legend=True)
 		# # Compute and plot starvations during search
-		# # plotStarvations([t+"_stas.tsv" for t in templates], names, topology, 50e6, topo, legend=True)
+		plotStarvations([t+"_stas.tsv" for t in templates], names, topology, 600e6, topo, legend=True)
 		# # # # # # Compute and plot fairness during search
 		plotSearchScalars([t+"_fair.tsv" for t in templates], names, "Fairness",
 				"Fairness during the search", topo, legend=True)

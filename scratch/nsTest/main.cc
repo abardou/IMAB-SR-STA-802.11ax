@@ -124,13 +124,13 @@ int main (int argc, char *argv[]) {
   // Number of simulations to run
   unsigned int nSimulations = 25;
   // Duration of a single simulation
-  double duration = 30.0;
+  double duration = 120.0;
   // Duration of a single test
   double testDuration = 0.05;
   std::vector<unsigned int> window_size({100000000});
   std::vector<std::vector<double>> vec_times({std::vector<double>({0})});
-  std::vector<std::vector<double>> vec_saturatedStas({std::vector<double>({0}), std::vector<double>({1.0/3.0}), std::vector<double>({1.0}), std::vector<double>({2.0/3.0})}); // 
-  std::vector<std::vector<double>> vec_defaultConfig({std::vector<double>({-81,10,-82,9,-78,14,-79,10,-70,6,-82,14,-75,10,-78,16,-81,14,-73,2})}); // std::vector<double>({-81,18,-82,16,-82,18,-81,16,-80,17,-81,17,-80,17,-80,16,-81,19,-80,18}), std::vector<double>()
+  std::vector<std::vector<double>> vec_saturatedStas({std::vector<double>({1.0})}); // std::vector<double>({0}), std::vector<double>({1.0/3.0}), std::vector<double>({2.0/3.0})
+  std::vector<std::vector<double>> vec_defaultConfig({std::vector<double>()}); // std::vector<double>({-81,18,-82,16,-82,18,-81,16,-80,17,-81,17,-80,17,-80,16,-81,19,-80,18}), std::vector<double>({-81,10,-82,9,-78,14,-79,10,-70,6,-82,14,-75,10,-78,16,-81,14,-73,2})
   for (std::vector<double> defaultConfig: vec_defaultConfig) {
     for (std::vector<double> times: vec_times) {
       for (std::vector<double> saturatedStas: vec_saturatedStas) {
@@ -145,7 +145,7 @@ int main (int argc, char *argv[]) {
         // Rewards to test
         std::vector<Reward> rewards({AD_HOC});
         // Topos to test
-        std::vector<std::string> topos({"T12"});
+        std::vector<std::string> topos({"T7", "C6o", "T12"});
         // For each topo
 
         for (unsigned int window: window_size) {
@@ -182,7 +182,7 @@ int main (int argc, char *argv[]) {
                   }
 
                   // Build the template of the output
-                  std::string outputName = topo + "_" + doubleToString(duration) + "_" + oId + "_TNORM_" + sId + "_" + rId + "_" + doubleToString(testDuration) + "_" + doubleToString(saturatedStas[0]);
+                  std::string outputName = topo + "_" + doubleToString(duration) + "_" + oId + "_" + sId + "_" + rId + "_" + doubleToString(testDuration); //+ "_" + doubleToString(saturatedStas[0]);
 
                   // Log
                   std::cout << "Working on " << outputName << "..." << std::endl;
