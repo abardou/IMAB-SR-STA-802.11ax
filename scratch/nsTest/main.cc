@@ -139,9 +139,9 @@ int main (int argc, char *argv[]) {
           nc_default.push_back(std::make_tuple(defaultConfig[i], defaultConfig[i+1]));
         }
         // Optimizers to test
-        std::vector<Optim> optimizers({IDLEOPT});
+        std::vector<Optim> optimizers({IDLEOPT, THOMP_GAMNORM, THOMP_NORM, EGREEDY});
         // Samplers to test
-        std::vector<Samp> samplers({UNIF});
+        std::vector<Samp> samplers({UNIF, HGM});
         // Rewards to test
         std::vector<Reward> rewards({AD_HOC});
         // Topos to test
@@ -155,7 +155,7 @@ int main (int argc, char *argv[]) {
               // For each sampler
               for (Samp s: samplers) {
                 // Don't test some combinations
-                if ((s == UNIF && (o == THOMP_GAMNORM)) || (s == HGM && o == EGREEDY)) {
+                if ((s == UNIF && (o == THOMP_GAMNORM)) || (s == HGM && (o == EGREEDY || o == IDLEOPT))) {
                   continue;
                 }
                 // For each reward

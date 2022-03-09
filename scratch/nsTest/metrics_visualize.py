@@ -563,14 +563,14 @@ duration = 120.0
 testDurations = [0.05]
 
 topos = ["T7", "C6o", "T12"]
-tests = ["EGREED_UNI_ADHOC", "TNORM_UNI_ADHOC", "TNORM_HGMT_ADHOC", "TGNORM_HGMT_ADHOC"]
+tests = ["DEFAULT_UNI_ADHOC", "EGREED_UNI_ADHOC", "TNORM_UNI_ADHOC", "TNORM_HGMT_ADHOC", "TGNORM_HGMT_ADHOC"]
 # saturation = [0.0, 0.333333, 0.666667, 1.0]
 
 for topo in topos:
 	for testDuration in testDurations:
 		templates = ['data/' + topo + '_' + str(duration) + '_' + t + '_' + str(testDuration) for t in tests]
 		# names = ["BEST 0.7"]
-		names = ["EGREEDY", "TS", "GM-TS", "OURS"]
+		names = ["DEFAULT", "EGREEDY", "TS", "GM-TS", "OURS"]
 		topology = 'topos/'+topo+".json"
 		print(topology)
 		print("Average STA-AP distance:", averageSTAAPDistance(topology))
