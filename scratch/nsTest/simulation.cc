@@ -347,7 +347,7 @@ double Simulation::adHocRewardFromThroughputs() {
   double starvRew = 1, noStarvRew = 1, nStarv = 0, nNoStarv = 0;
   for (unsigned int i = 0; i < this->_throughputs.size(); i++)
     for (unsigned int j = 0; j < this->_throughputs[i].size(); j++) {
-      double threshold = 0.1 * this->_attainableThroughputs[this->_stepIndex][i][j];
+      double threshold = 0.05 * this->_attainableThroughputs[this->_stepIndex][i][j];
       if (this->_throughputs[i][j] < threshold) {
         this->_throughputs[i][j] = std::max(this->_throughputs[i][j], 1.0);
         starvRew *= this->_throughputs[i][j] / threshold;
