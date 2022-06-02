@@ -182,7 +182,7 @@ int main (int argc, char *argv[]) {
                   }
 
                   // Build the template of the output
-                  std::string outputName = topo + "_" + doubleToString(duration) + "_" + oId + "_" + sId + "_" + rId + "_0.15_" + doubleToString(testDuration); //+ "_" + doubleToString(saturatedStas[0]);
+                  std::string outputName = topo + "_" + doubleToString(duration) + "_" + oId + "_" + sId + "_" + rId + "_0.2_" + doubleToString(testDuration); //+ "_" + doubleToString(saturatedStas[0]);
 
                   // Log
                   std::cout << "Working on " << outputName << "..." << std::endl;

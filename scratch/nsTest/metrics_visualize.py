@@ -509,6 +509,29 @@ def averageSTAInterfAPDistance(topology):
 
 	return avg_dist / n
 
+def plotAlphaSensibility(values, alpha_templates):
+	yyy = []
+	yyy_ci = []
+
+	for templates in alpha_templates:
+		yy_alpha = []
+		yy_alpha_ci = []
+
+		dfs = getRegrets(templates)
+		for i in range(len(dfs)):
+			for line,_ in dfs[i].iterrows():
+				dfs[i].loc[line] = dfs[i].loc[line].cumsum()
+			
+			yy_alpha.append(dfs[i][dfs[i].columns[-1]].mean())
+			yy_alpha_ci.append(1.96 * dfs[i][dfs[i].columns[-1]].std() / m.sqrt(dfs[i].shape[0]))
+
+		yyy.append(yy_alpha)
+		yyy_ci.append(yy_alpha_ci)
+	
+	print(yyy)
+	print(yyy_ci)
+
+
 def plotRewardFunctionCut(path):
 	data = pd.read_csv(path, sep="\t", index_col=False)
 	pd.set_option('display.max_rows', None)
@@ -575,7 +598,16 @@ tests = ["DEFAULT_UNI_ADHOC", "EGREED_UNI_ADHOC", "TNORM_UNI_ADHOC", "TNORM_HGMT
 
 for topo in topos:
 	for testDuration in testDurations:
-		templates = ['data/' + topo + '_' + str(duration) + '_' + t + '_0.05_' + str(testDuration) for t in tests]
+		templates = ['data/' + topo + '_' + str(duration) + '_' + t + '_0.15_' + str(testDuration) for t in tests]
+
+		alpha_values = [0.05, 0.1, 0.15]
+		alpha_templates = []
+		for alpha in alpha_values:
+			if alpha != 0.1:
+				alpha_templates.append(['data/' + topo + '_' + str(duration) + '_' + t + f"_{alpha}_" + str(testDuration) + "_rew.tsv" for t in tests])
+			else:
+				alpha_templates.append(['data/' + topo + '_' + str(duration) + '_' + t + "_" + str(testDuration) + "_rew.tsv" for t in tests])
+
 		# names = ["BEST 0.7"]
 		names = ["DEFAULT", "ε-GREEDY", "TS", "GM-TS", "OURS"] # "DEFAULT", "ε-GREEDY", "TS", "GM-TS", 
 		topology = 'topos/'+topo+".json"
@@ -589,7 +621,8 @@ for topo in topos:
 		# Plot the regret
 		# plotRegrets([t+"_rew.tsv" for t in templates], names, topo, legend=True)
 		# # # # # # Plot the cumulative regret for all the files
-		plotCumRegrets([t+"_rew.tsv" for t in templates], names, topo)
+		plotAlphaSensibility(alpha_values, alpha_templates)
+		# plotCumRegrets([t+"_rew.tsv" for t in templates], names, topo)
 		# # # # # Throughputs des stations en fonction du temps
 		# plotSearchScalars([t+"_rew.tsv" for t in templates], names, "Reward", "Reward during the search", topo, legend=True)
 		# # Compute and plot starvations during search
