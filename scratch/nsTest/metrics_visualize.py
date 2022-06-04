@@ -509,7 +509,7 @@ def averageSTAInterfAPDistance(topology):
 
 	return avg_dist / n
 
-def plotAlphaSensibility(values, alpha_templates):
+def plotAlphaSensibility(values, alpha_templates, names):
 	yyy = []
 	yyy_ci = []
 
@@ -528,9 +528,22 @@ def plotAlphaSensibility(values, alpha_templates):
 		yyy.append(yy_alpha)
 		yyy_ci.append(yy_alpha_ci)
 	
-	print(yyy)
-	print(yyy_ci)
+	yyy = np.array(yyy)
+	yyy_ci = np.array(yyy_ci)
 
+	fig, ax = plt.subplots(figsize=(11, 8))
+	for strat in range(yyy.shape[1]):
+		yy = yyy[:, strat]
+		yy_ci = yyy_ci[:, strat]
+
+		p = ax.plot(values, yy, label=names[strat])
+		ax.fill_between(values, yy - yy_ci, yy + yy_ci, color=p[0].get_color(), alpha=0.15)
+
+	# plt.title(topoName + ': Regret evolution for each strategy')
+	plt.xlabel("Starvation threshold α")
+	plt.ylabel("Cumulative regret at the end of the simulation")
+	plt.legend(ncol=2)
+	plt.show()
 
 def plotRewardFunctionCut(path):
 	data = pd.read_csv(path, sep="\t", index_col=False)
@@ -600,7 +613,7 @@ for topo in topos:
 	for testDuration in testDurations:
 		templates = ['data/' + topo + '_' + str(duration) + '_' + t + '_0.15_' + str(testDuration) for t in tests]
 
-		alpha_values = [0.05, 0.1, 0.15]
+		alpha_values = [0.05, 0.1, 0.15, 0.2]
 		alpha_templates = []
 		for alpha in alpha_values:
 			if alpha != 0.1:
@@ -621,7 +634,7 @@ for topo in topos:
 		# Plot the regret
 		# plotRegrets([t+"_rew.tsv" for t in templates], names, topo, legend=True)
 		# # # # # # Plot the cumulative regret for all the files
-		plotAlphaSensibility(alpha_values, alpha_templates)
+		plotAlphaSensibility(alpha_values, alpha_templates, names)
 		# plotCumRegrets([t+"_rew.tsv" for t in templates], names, topo)
 		# # # # # Throughputs des stations en fonction du temps
 		# plotSearchScalars([t+"_rew.tsv" for t in templates], names, "Reward", "Reward during the search", topo, legend=True)
